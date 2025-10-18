@@ -15,6 +15,8 @@ export function VoiceButton({ onVoiceInput, onPlayAudio, disabled = false }: Voi
   const [isPlaying, setIsPlaying] = useState(false)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const finalTranscriptRef = useRef<string>('')
 
   const startListening = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -25,26 +27,66 @@ export function VoiceButton({ onVoiceInput, onPlayAudio, disabled = false }: Voi
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SpeechRecognition()
     
-    recognition.continuous = false
-    recognition.interimResults = false
+    recognition.continuous = true
+    recognition.interimResults = true
     recognition.lang = 'en-US'
+    
+    finalTranscriptRef.current = ''
 
     recognition.onstart = () => {
       setIsListening(true)
     }
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript
-      onVoiceInput(transcript)
+      let interimTranscript = ''
+      let finalTranscript = ''
+
+      for (let i = 0; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript
+        } else {
+          interimTranscript += transcript
+        }
+      }
+
+      // Update final transcript accumulator
+      if (finalTranscript) {
+        finalTranscriptRef.current += finalTranscript + ' '
+      }
+
+      // Reset silence timer whenever speech is detected
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current)
+      }
+
+      // Set a new timer to stop after 1 second of silence
+      silenceTimerRef.current = setTimeout(() => {
+        if (recognitionRef.current && finalTranscriptRef.current.trim()) {
+          recognitionRef.current.stop()
+        }
+      }, 1000) // 1 second of silence before stopping
     }
 
     recognition.onend = () => {
       setIsListening(false)
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current)
+      }
+      
+      // Send the final accumulated transcript
+      if (finalTranscriptRef.current.trim()) {
+        onVoiceInput(finalTranscriptRef.current.trim())
+        finalTranscriptRef.current = ''
+      }
     }
 
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error)
       setIsListening(false)
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current)
+      }
     }
 
     recognitionRef.current = recognition
@@ -55,6 +97,9 @@ export function VoiceButton({ onVoiceInput, onPlayAudio, disabled = false }: Voi
     if (recognitionRef.current) {
       recognitionRef.current.stop()
       setIsListening(false)
+    }
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current)
     }
   }
 
