@@ -23,7 +23,7 @@ export async function chatWithGPT(messages: ChatMessage[]): Promise<string> {
       model: "gpt-4o",
       messages: messages,
       temperature: 0.7,
-      max_tokens: 200, // Limit words
+      max_tokens: 110, // Limit words
     })
 
     return completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.'

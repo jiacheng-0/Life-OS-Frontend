@@ -32,7 +32,7 @@ export async function getCalendarEvents(timeMin?: string, timeMax?: string, user
 
     // For service accounts, we need to use the actual calendar ID (user's email)
     // First, try to get the calendar list to find the shared calendar
-    let calendarId = 'jiachengg73@gmail.com'
+    let calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary'
     
     try {
       const calendarList = await calendar.calendarList.list()
@@ -46,7 +46,7 @@ export async function getCalendarEvents(timeMin?: string, timeMax?: string, user
         calendarId = calendarList.data.items[0].id!
       }
     } catch (listError) {
-      console.log('Could not list calendars, using provided email or primary:', listError)
+      console.log('Could not list calendars, using provided email or default:', listError)
       if (userEmail) {
         calendarId = userEmail
       }
