@@ -37,3 +37,18 @@ export function getTimeUntilEvent(eventDate: Date): string {
     return `${minutes}m`
   }
 }
+
+export function getEventDuration(startDate: Date, endDate: Date): string {
+  const diff = endDate.getTime() - startDate.getTime()
+  
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  
+  if (hours > 0 && minutes > 0) {
+    return `${hours} hr ${minutes} m`
+  } else if (hours > 0) {
+    return `${hours} hr`
+  } else {
+    return `${minutes} m`
+  }
+}

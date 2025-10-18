@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Calendar, Clock, MapPin } from 'lucide-react'
-import { formatDate, formatTime, getTimeUntilEvent } from '@/lib/utils'
+import { formatDate, formatTime, getEventDuration } from '@/lib/utils'
 
 interface CalendarEvent {
   id: string
@@ -132,6 +132,12 @@ export function CalendarView({ events, isLoading = false }: CalendarViewProps) {
                     ? new Date(event.start.dateTime)
                     : new Date(event.start.date!)
                   
+                  const eventEndDate = event.end.dateTime
+                    ? new Date(event.end.dateTime)
+                    : event.end.date
+                    ? new Date(event.end.date)
+                    : null
+                  
                   return (
                     <div key={event.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500 mt-2" />
@@ -139,12 +145,12 @@ export function CalendarView({ events, isLoading = false }: CalendarViewProps) {
                         <p className="text-sm font-medium truncate">{event.summary}</p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{formatDate(eventDate)}</span>
-                          {event.start.dateTime && (
+                          {event.start.dateTime && eventEndDate && (
                             <>
                               <span>•</span>
-                              <span>{formatTime(eventDate)}</span>
+                              <span>{formatTime(eventEndDate)}</span>
                               <span>•</span>
-                              <span>{getTimeUntilEvent(eventDate)}</span>
+                              <span>{getEventDuration(eventDate, eventEndDate)}</span>
                             </>
                           )}
                         </div>
