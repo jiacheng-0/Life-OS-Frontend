@@ -74,17 +74,31 @@ IMPORTANT: Keep responses under 30 words. Use 2-3 sentences maximum. Be conversa
 
     // Update user profile with extracted goals if any
     if (extractedGoals.goals.length > 0 || extractedGoals.constraints.length > 0) {
-      const updatedGoals = [...(userProfile?.goals || []), ...extractedGoals.goals]
-      const updatedConstraints = [...(userProfile?.constraints || []), ...extractedGoals.constraints]
+      // Deduplicate goals and constraints (case-insensitive)
+      const existingGoals = (userProfile?.goals || []).map((g: string) => g.toLowerCase().trim())
+      const existingConstraints = (userProfile?.constraints || []).map((c: string) => c.toLowerCase().trim())
+      
+      const newGoals = extractedGoals.goals.filter(
+        (goal: string) => !existingGoals.includes(goal.toLowerCase().trim())
+      )
+      const newConstraints = extractedGoals.constraints.filter(
+        (constraint: string) => !existingConstraints.includes(constraint.toLowerCase().trim())
+      )
+      
+      const updatedGoals = [...(userProfile?.goals || []), ...newGoals]
+      const updatedConstraints = [...(userProfile?.constraints || []), ...newConstraints]
 
-      await supabaseAdmin
-        .from('user_profiles')
-        .update({
-          goals: updatedGoals,
-          constraints: updatedConstraints,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id)
+      // Only update if there are actually new items to add
+      if (newGoals.length > 0 || newConstraints.length > 0) {
+        await supabaseAdmin
+          .from('user_profiles')
+          .update({
+            goals: updatedGoals,
+            constraints: updatedConstraints,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+      }
     }
 
     return NextResponse.json({

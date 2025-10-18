@@ -122,11 +122,24 @@ export default function Dashboard() {
 
         // Update user profile if goals were extracted
         if (data.extractedGoals && (data.extractedGoals.goals.length > 0 || data.extractedGoals.constraints.length > 0)) {
-          setUserProfile(prev => ({
-            ...prev,
-            goals: [...prev.goals, ...data.extractedGoals.goals],
-            constraints: [...prev.constraints, ...data.extractedGoals.constraints]
-          }))
+          setUserProfile(prev => {
+            // Deduplicate goals and constraints (case-insensitive)
+            const existingGoals = prev.goals.map(g => g.toLowerCase().trim())
+            const existingConstraints = prev.constraints.map(c => c.toLowerCase().trim())
+            
+            const newGoals = data.extractedGoals.goals.filter(
+              (goal: string) => !existingGoals.includes(goal.toLowerCase().trim())
+            )
+            const newConstraints = data.extractedGoals.constraints.filter(
+              (constraint: string) => !existingConstraints.includes(constraint.toLowerCase().trim())
+            )
+            
+            return {
+              ...prev,
+              goals: [...prev.goals, ...newGoals],
+              constraints: [...prev.constraints, ...newConstraints]
+            }
+          })
         }
 
         // Refresh calendar if needed
