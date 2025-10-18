@@ -25,6 +25,8 @@ export function ChatPanel({ onSendMessage, messages, isLoading }: ChatPanelProps
   const [inputValue, setInputValue] = useState('')
   const [lastAiResponse, setLastAiResponse] = useState<string>('')
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const lastPlayedMessageRef = useRef<string>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,6 +73,82 @@ export function ChatPanel({ onSendMessage, messages, isLoading }: ChatPanelProps
     }
   }
 
+  const playAudioAutomatically = async (text: string) => {
+    try {
+      // Fetch audio from the API
+      const response = await fetch('/api/voice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate speech')
+      }
+
+      const data = await response.json()
+      
+      if (!data.audio) {
+        console.log('No audio data received')
+        return
+      }
+      
+      // Convert base64 to blob
+      const binaryString = atob(data.audio)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      const audioBlob = new Blob([bytes], { type: 'audio/mpeg' })
+      const audioUrl = URL.createObjectURL(audioBlob)
+      
+      // Stop any currently playing audio
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      }
+      
+      const audio = new Audio(audioUrl)
+      audioRef.current = audio
+      
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl)
+      }
+      
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e)
+        URL.revokeObjectURL(audioUrl)
+      }
+      
+      await audio.play()
+    } catch (error) {
+      console.error('Error playing audio automatically:', error)
+    }
+  }
+
+  // Auto-play audio when new AI messages arrive
+  useEffect(() => {
+    const assistantMessages = messages.filter(m => m.role === 'assistant')
+    
+    // Check if we have a new assistant message
+    if (assistantMessages.length > 0) {
+      const lastAssistantMessage = assistantMessages[assistantMessages.length - 1]
+      
+      // Only play if this is a new message we haven't played before
+      if (lastAssistantMessage.content !== lastPlayedMessageRef.current && lastPlayedMessageRef.current !== '') {
+        playAudioAutomatically(lastAssistantMessage.content)
+        lastPlayedMessageRef.current = lastAssistantMessage.content
+      } else if (lastPlayedMessageRef.current === '') {
+        // Initialize the reference on first load without playing
+        lastPlayedMessageRef.current = lastAssistantMessage.content
+      }
+    }
+  }, [messages])
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -100,7 +178,7 @@ export function ChatPanel({ onSendMessage, messages, isLoading }: ChatPanelProps
                 <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">Start a conversation</h3>
                 <p className="text-slate-600 dark:text-slate-400 mb-4">Chat with your AI life coach</p>
                 <div className="inline-block px-4 py-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <p className="text-sm text-blue-700 dark:text-blue-300">💡 Try: "Help me sleep earlier and see my kids more"</p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">💡 Try: "How is my week looking?"</p>
                 </div>
               </div>
             )}

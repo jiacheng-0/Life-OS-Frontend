@@ -60,12 +60,12 @@ export function VoiceButton({ onVoiceInput, onPlayAudio, disabled = false }: Voi
         clearTimeout(silenceTimerRef.current)
       }
 
-      // Set a new timer to stop after 1 second of silence
+      // Set a new timer to stop after 0.7 seconds of silence
       silenceTimerRef.current = setTimeout(() => {
         if (recognitionRef.current && finalTranscriptRef.current.trim()) {
           recognitionRef.current.stop()
         }
-      }, 1000) // 1 second of silence before stopping
+      }, 700) // 0.7 seconds of silence before stopping
     }
 
     recognition.onend = () => {
