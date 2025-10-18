@@ -15,14 +15,22 @@ export async function GET(request: NextRequest) {
     const timeMin = searchParams.get('timeMin')
     const timeMax = searchParams.get('timeMax')
 
-    const events = await getCalendarEvents(timeMin || undefined, timeMax || undefined)
+    console.log('Fetching calendar events for user:', session.user.email)
+    const events = await getCalendarEvents(timeMin || undefined, timeMax || undefined, session.user.email)
+    console.log('Successfully fetched', events.length, 'calendar events')
 
     return NextResponse.json({ events })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Calendar GET API error:', error)
+    console.error('Error message:', error?.message)
+    console.error('Error stack:', error?.stack)
     return NextResponse.json(
-      { error: 'Failed to fetch calendar events' },
+      { 
+        error: 'Failed to fetch calendar events',
+        details: error?.message || 'Unknown error',
+        hasCredentials: !!process.env.GOOGLE_APPLICATION_CREDENTIALS
+      },
       { status: 500 }
     )
   }
