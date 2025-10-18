@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { chatWithGPT, extractGoalsFromMessage, type ChatMessage } from '@/lib/openai'
 import { supabaseAdmin } from '@/lib/supabaseClient'
+import { getCalendarEvents } from '@/lib/gcal'
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,6 +31,30 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
+    // Fetch calendar events for the next 7 days
+    let calendarEvents: Array<{
+      title: string
+      start: string
+      end: string
+      location?: string
+    }> = []
+    try {
+      const now = new Date()
+      const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      const events = await getCalendarEvents(now.toISOString(), nextWeek.toISOString(), session.user.email)
+      
+      // Format events for the AI (summary, start time, end time)
+      calendarEvents = events.map((event: any) => ({
+        title: event.summary,
+        start: event.start.dateTime || event.start.date,
+        end: event.end?.dateTime || event.end?.date,
+        location: event.location
+      }))
+    } catch (error) {
+      console.error('Error fetching calendar events for chat:', error)
+      // Continue without calendar events if there's an error
+    }
+
     // Extract goals from the message
     const extractedGoals = await extractGoalsFromMessage(message, userProfile)
 
@@ -49,12 +74,13 @@ End each chat with motivating, friendly encouragement.
 
 Style:
 Conversational, upbeat, and concise — max 50 words, 4–5 sentences.
-Use a confident, articulate Asian American voice. Example: “I’m so excited to dive in and hear what everyone’s been working on—let’s make this session really collaborative!”
+Use a confident, articulate Asian American voice. Example: "I'm so excited to dive in and hear what everyone's been working on—let's make this session really collaborative!"
 
 Data:
 User's current goals: ${JSON.stringify(userProfile?.goals || [])}
 User's preferences: ${JSON.stringify(userProfile?.preferences || {})}
 User's routines: ${JSON.stringify(userProfile?.routines || [])}
+Calendar events (next 7 days): ${JSON.stringify(calendarEvents)}
 
 Rules:
 

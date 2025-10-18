@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { VoiceButton } from './VoiceButton'
 import { Send, Bot, User } from 'lucide-react'
+import Image from 'next/image'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -86,7 +87,15 @@ export function ChatPanel({ onSendMessage, messages, isLoading }: ChatPanelProps
               <div className="text-center py-12">
                 <div className="relative inline-block mb-6">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full blur-xl opacity-20 animate-pulse"></div>
-                  <Bot className="relative h-16 w-16 mx-auto text-blue-600 dark:text-blue-400" />
+                  <div className="relative w-16 h-16 mx-auto rounded-full overflow-hidden">
+                    <Image 
+                      src="/assets/cropped_circle_image.png" 
+                      alt="Sherry AI" 
+                      width={64} 
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 </div>
                 <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">Start a conversation</h3>
                 <p className="text-slate-600 dark:text-slate-400 mb-4">Chat with your AI life coach</p>
@@ -104,8 +113,14 @@ export function ChatPanel({ onSendMessage, messages, isLoading }: ChatPanelProps
                 }`}
               >
                 {message.role === 'assistant' && (
-                  <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <Bot className="h-5 w-5 text-white" />
+                  <div className="flex-shrink-0 w-9 h-9 rounded-full overflow-hidden shadow-lg">
+                    <Image 
+                      src="/assets/cropped_circle_image.png" 
+                      alt="Sherry AI" 
+                      width={36} 
+                      height={36}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 )}
                 
@@ -132,8 +147,14 @@ export function ChatPanel({ onSendMessage, messages, isLoading }: ChatPanelProps
             
             {isLoading && (
               <div className="flex gap-3 justify-start">
-                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg animate-pulse">
-                  <Bot className="h-5 w-5 text-white" />
+                <div className="flex-shrink-0 w-9 h-9 rounded-full overflow-hidden shadow-lg animate-pulse">
+                  <Image 
+                    src="/assets/cropped_circle_image.png" 
+                    alt="Sherry AI" 
+                    width={36} 
+                    height={36}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 shadow-md">
                   <div className="flex space-x-2">
