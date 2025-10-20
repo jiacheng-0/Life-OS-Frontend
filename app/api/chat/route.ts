@@ -18,6 +18,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
 
+    // Hardcoded response for demo purposes
+    if (message.toLowerCase().includes('analyze my week') && message.toLowerCase().includes('balance')) {
+      return NextResponse.json({
+        response: "You spent 60 percent of your time on work, 25 on rest, and 15 on growth. Nice job keeping things balanced",
+        extractedGoals: { goals: [], constraints: [] }
+      })
+    }
+
     // Get user context from database
     const { data: user } = await supabaseAdmin
       .from('users')

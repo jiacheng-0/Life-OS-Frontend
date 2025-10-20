@@ -270,6 +270,7 @@ export default function Dashboard() {
                 onSendMessage={handleSendMessage}
                 messages={messages}
                 isLoading={isLoading}
+                onAudioComplete={loadCalendarEvents}
               />
             </div>
           </div>

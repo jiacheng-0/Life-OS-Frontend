@@ -19,9 +19,10 @@ interface ChatPanelProps {
   onSendMessage: (message: string) => Promise<void>
   messages: Message[]
   isLoading: boolean
+  onAudioComplete?: () => void
 }
 
-export function ChatPanel({ onSendMessage, messages, isLoading }: ChatPanelProps) {
+export function ChatPanel({ onSendMessage, messages, isLoading, onAudioComplete }: ChatPanelProps) {
   const [inputValue, setInputValue] = useState('')
   const [lastAiResponse, setLastAiResponse] = useState<string>('')
   const scrollAreaRef = useRef<HTMLDivElement>(null)
@@ -117,6 +118,10 @@ export function ChatPanel({ onSendMessage, messages, isLoading }: ChatPanelProps
       
       audio.onended = () => {
         URL.revokeObjectURL(audioUrl)
+        // Refresh calendar after audio completes
+        if (onAudioComplete) {
+          onAudioComplete()
+        }
       }
       
       audio.onerror = (e) => {
@@ -138,12 +143,9 @@ export function ChatPanel({ onSendMessage, messages, isLoading }: ChatPanelProps
     if (assistantMessages.length > 0) {
       const lastAssistantMessage = assistantMessages[assistantMessages.length - 1]
       
-      // Only play if this is a new message we haven't played before
-      if (lastAssistantMessage.content !== lastPlayedMessageRef.current && lastPlayedMessageRef.current !== '') {
+      // Play if this is a new message we haven't played before (including the first one)
+      if (lastAssistantMessage.content !== lastPlayedMessageRef.current) {
         playAudioAutomatically(lastAssistantMessage.content)
-        lastPlayedMessageRef.current = lastAssistantMessage.content
-      } else if (lastPlayedMessageRef.current === '') {
-        // Initialize the reference on first load without playing
         lastPlayedMessageRef.current = lastAssistantMessage.content
       }
     }
